@@ -1,0 +1,63 @@
+version: "3.8"
+
+# ================================
+# Docker Compose for Budget Tracker App
+# Services: PostgreSQL, Spring Boot Backend, React Frontend (Vite)
+# ================================
+
+services:
+  # --------------------
+  # PostgreSQL Database
+  # --------------------
+  db:
+    image: postgres:16-alpine
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: budgetdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  # --------------------
+  # Spring Boot Backend
+  # --------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: budget-tracker-backend
+    depends_on:
+      - db
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/budgetdb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - jwt.secret=${JWT_SECRET}            # Secret for signing JWT tokens (set via .env or host env)
+      - jwt.expirationMs=86400000           # JWT expiration time (in milliseconds: 1 day)
+    ports:
+      - "8080:8080"
+    restart: always
+
+  # --------------------
+  # React Frontend (Vite)
+  # --------------------
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: http://localhost:8080   # Passed as Vite env var at build time
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+# --------------------
+# Named volume for PostgreSQL data persistence
+# --------------------
+volumes:
+  db-data:
