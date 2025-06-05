@@ -42,7 +42,7 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-*personal*
+personal.txt
 
 # Environment variables and secrets
 .env
